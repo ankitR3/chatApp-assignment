@@ -25,10 +25,8 @@ export default function LogInButton({ size = 'sm', className = '' }: LogInButton
 
     if (status === 'loading') {
         return (
-            <div className='text-xs text-gray-400'>
-                Loading...
-            </div>
-        )
+            <div className={`h-8 rounded-md bg-gray-100 animate-pulse ${size === 'lg' ? 'w-24' : 'w-16'}`} />
+        );
     }
 
     if (session?.user) {
