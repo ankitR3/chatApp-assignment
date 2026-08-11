@@ -15,6 +15,11 @@ export async function proxy(req: NextRequest) {
         return NextResponse.next();
     }
 
+    // Fast path for logged-in users on landing page -> instant redirect to dashboard (0ms delay)
+    if (isLandingPage && hasSessionCookie) {
+        return NextResponse.redirect(new URL('/dashboard', req.url));
+    }
+
     // Fast path for guest users trying to access dashboard
     if (isDashboard && !hasSessionCookie) {
         return NextResponse.redirect(new URL('/', req.url));

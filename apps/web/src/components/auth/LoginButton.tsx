@@ -23,11 +23,7 @@ export default function LogInButton({ size = 'sm', className = '' }: LogInButton
         router.replace('/');
     }
 
-    if (status === 'loading') {
-        return (
-            <div className={`h-8 rounded-md bg-gray-100 animate-pulse ${size === 'lg' ? 'w-24' : 'w-16'}`} />
-        );
-    }
+
 
     if (session?.user) {
         return (
