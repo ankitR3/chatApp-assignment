@@ -1,0 +1,89 @@
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id          String    @id @default(cuid())
+  name        String
+  email       String    @unique
+  username    String?   @unique
+  password    String?
+  image       String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  ownerRooms  Room[]    @relation("RoomOwner")
+  roomMemberships RoomMember[]
+  messages  Message[]
+}
+
+model Room {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  isPrivate   Boolean   @default(false)
+  code        String    @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  ownerId     String
+  owner       User      @relation("RoomOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  members     RoomMember[]
+  message     Message[]
+
+  @@index([ownerId])
+  @@index([isPrivate])
+  @@index([code])
+}
+
+model RoomMember {
+  id          String    @id @default(cuid())
+  joinedAt    DateTime  @default(now())
+  role        RoomRole  @default(MEMBER)
+
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  roomId      String
+  room        Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roomId])
+  @@index([roomId])
+  @@index([userId])
+}
+
+model Message {
+  id        String      @id @default(cuid())
+  content   String
+  type      MessageType @default(USER)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  authorId  String
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  roomId    String
+  room      Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId, createdAt])
+  @@index([authorId])
+}
+
+enum RoomRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum MessageType {
+  USER
+  SYSTEM
+}
