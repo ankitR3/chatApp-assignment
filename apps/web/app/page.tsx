@@ -15,6 +15,14 @@ export default function Home() {
     }
   }, [status, session, router]);
 
+  // Show a centered spinner after login while redirecting to dashboard
+  if (status === 'authenticated') {
+    return (
+      <div className='min-h-screen bg-white flex items-center justify-center'>
+        <div className='w-10 h-10 border-4 border-gray-200 border-t-gray-800 rounded-full animate-spin' />
+      </div>
+    );
+  }
 
   return (
     <div className='min-h-screen bg-white flex flex-col'>
