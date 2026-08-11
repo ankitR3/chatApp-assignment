@@ -15,21 +15,6 @@ export default function Home() {
     }
   }, [status, session, router]);
 
-  if (status === 'loading') {
-    return (
-      <div className='min-h-screen bg-white flex items-center justify-center text-sm text-gray-400'>
-        Loading...
-      </div>
-    );
-  }
-
-  if (status === 'authenticated') {
-    return (
-      <div className='min-h-screen bg-white flex items-center justify-center text-sm text-gray-400'>
-        Redirecting to chat...
-      </div>
-    );
-  }
 
   return (
     <div className='min-h-screen bg-white flex flex-col'>
@@ -39,7 +24,7 @@ export default function Home() {
         <div className='flex items-center gap-2'>
           <div className='w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center'>
             <svg className='w-4 h-4 stroke-white fill-none' viewBox='0 0 24 24' strokeWidth={2} strokeLinecap='round' strokeLinejoin='round'>
-              <path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/>
+              <path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' />
             </svg>
           </div>
           <span className='text-base font-medium text-gray-900 tracking-tight'>ChatApp</span>
@@ -81,12 +66,12 @@ export default function Home() {
             <div className='w-10 border-r border-gray-100 flex flex-col items-center py-3 gap-2'>
               <div className='w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center'>
                 <svg className='w-3.5 h-3.5 fill-gray-900' viewBox='0 0 24 24'>
-                  <path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/>
+                  <path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' />
                 </svg>
               </div>
               <div className='w-7 h-7 rounded-lg flex items-center justify-center'>
                 <svg className='w-3.5 h-3.5 stroke-gray-400 fill-none' viewBox='0 0 24 24' strokeWidth={2} strokeLinecap='round' strokeLinejoin='round'>
-                  <circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/>
+                  <circle cx='11' cy='11' r='8' /><line x1='21' y1='21' x2='16.65' y2='16.65' />
                 </svg>
               </div>
               <div className='w-6 h-6 rounded-full bg-blue-100 mt-auto mb-1'></div>
@@ -132,7 +117,7 @@ export default function Home() {
                 <div className='flex-1 h-6 rounded-full bg-gray-50 border border-gray-100 text-[9px] text-gray-400 flex items-center px-2'>Type a message...</div>
                 <div className='w-6 h-6 rounded-full bg-gray-900 flex items-center justify-center'>
                   <svg className='w-2.5 h-2.5 stroke-white fill-none' viewBox='0 0 24 24' strokeWidth={2} strokeLinecap='round' strokeLinejoin='round'>
-                    <line x1='22' y1='2' x2='11' y2='13'/><polygon points='22 2 15 22 11 13 2 9 22 2' fill='white'/>
+                    <line x1='22' y1='2' x2='11' y2='13' /><polygon points='22 2 15 22 11 13 2 9 22 2' fill='white' />
                   </svg>
                 </div>
               </div>
