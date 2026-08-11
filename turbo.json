@@ -1,5 +1,6 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
+  "globalEnv": ["NEXTAUTH_SECRET", "NEXTAUTH_URL", "NEXT_PUBLIC_BACKEND_URL", "NEXT_PUBLIC_SOCKET_URL"],
   "ui": "tui",
   "tasks": {
     "build": {
