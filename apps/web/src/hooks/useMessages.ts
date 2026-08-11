@@ -5,13 +5,14 @@ import { useSession } from 'next-auth/react';
 import axios from 'axios';
 import { GET_MESSAGE_URL } from '@/routes/api-routes';
 
-interface Message {
+export interface Message {
     id: string;
     senderId: string;
     senderName?: string;
     message: string;
     timestamp: string;
     type?: 'chat' | 'system';
+    status?: 'SENT' | 'DELIVERED' | 'READ';
 }
 
 export function useMessages(roomId: string) {
@@ -32,11 +33,13 @@ export function useMessages(roomId: string) {
                 });
                 const fetched = res.data.messages ?? [];
                 setMessages(fetched.map((msg: any) => ({
+                    id: msg.id,
                     senderId: msg.author.id,
                     senderName: msg.author.name,
                     message: msg.content,
                     timestamp: msg.createdAt,
                     type: msg.type === 'SYSTEM' ? 'system' : 'chat',
+                    status: msg.status || 'SENT',
                 })));
             } catch (err) {
                 console.log('get message error: ', err);

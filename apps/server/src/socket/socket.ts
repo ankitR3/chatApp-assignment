@@ -119,6 +119,9 @@ class WebSocketClass {
                         payload: { onlineUserIds: Array.from(this.userSocketsCount.keys()) }
                     });
                     return;
+
+                case MessageType.MESSAGE_READ:
+                    return this.handleMessageRead(socketMessage, socket);
             }
         } catch (err) {
             console.log('Failed to handle message:', err);
@@ -144,6 +147,11 @@ class WebSocketClass {
                         roomId: '',
                         payload: { userId, isOnline: true }
                     } as any);
+
+                    // Auto-deliver all SENT messages in user's rooms when they come online
+                    this.deliverPendingMessages(userId).catch((err) =>
+                        console.log('deliverPendingMessages error:', err)
+                    );
                 }
             }
 
@@ -207,12 +215,26 @@ class WebSocketClass {
                 return;
             }
 
+            // Check if any other user in the room is online
+            const roomMembers = await prisma.roomMember.findMany({
+                where: { roomId },
+                select: { userId: true }
+            }).catch(() => []);
+
+            const otherOnlineMembers = roomMembers.filter(
+                (m) => m.userId !== payload.senderId && this.userSocketsCount.has(m.userId)
+            );
+
+            // Determine initial status: DELIVERED if any recipient is online, else SENT
+            const initialStatus = otherOnlineMembers.length > 0 ? 'DELIVERED' : 'SENT';
+
             const sendMessage: SocketType = {
                 type: MessageType.CHAT,
                 roomId,
                 payload: {
                     ...payload,
-                    timestamp: payload?.timestamp || new Date().toISOString()
+                    timestamp: payload?.timestamp || new Date().toISOString(),
+                    status: initialStatus,
                 }
             };
 
@@ -223,7 +245,7 @@ class WebSocketClass {
                 this.broadcastToRoom(sendMessage);
             }
 
-            console.log(`Message sent to room ${roomId}`);
+            console.log(`Message sent to room ${roomId} with status ${initialStatus}`);
         } catch (err) {
             console.log('chat message err: ', err);
         }
@@ -273,6 +295,92 @@ class WebSocketClass {
             socket.leave(roomId);
         } catch (err) {
             console.log('handleRoomExit error: ', err);
+        }
+    }
+
+    private async deliverPendingMessages(userId: string) {
+        try {
+            // Find all rooms the user is a member of
+            const memberships = await prisma.roomMember.findMany({
+                where: { userId },
+                select: { roomId: true }
+            });
+
+            const roomIds = memberships.map((m) => m.roomId);
+            if (roomIds.length === 0) return;
+
+            // Find all SENT messages in those rooms that were NOT sent by this user
+            const pendingMessages = await prisma.message.findMany({
+                where: {
+                    roomId: { in: roomIds },
+                    status: 'SENT',
+                    authorId: { not: userId },
+                },
+                select: { id: true, roomId: true }
+            });
+
+            if (pendingMessages.length === 0) return;
+
+            const messageIds = pendingMessages.map((m) => m.id);
+
+            // Bulk update to DELIVERED
+            await prisma.message.updateMany({
+                where: { id: { in: messageIds } },
+                data: { status: 'DELIVERED' }
+            });
+
+            // Group by roomId and broadcast delivery notifications
+            const byRoom = new Map<string, string[]>();
+            for (const msg of pendingMessages) {
+                const ids = byRoom.get(msg.roomId) || [];
+                ids.push(msg.id);
+                byRoom.set(msg.roomId, ids);
+            }
+
+            for (const [roomId, ids] of byRoom) {
+                this.broadcastToRoom({
+                    type: MessageType.MESSAGE_DELIVERED,
+                    roomId,
+                    payload: { messageIds: ids }
+                });
+            }
+
+            console.log(`Delivered ${messageIds.length} pending messages for user ${userId}`);
+        } catch (err) {
+            console.log('deliverPendingMessages error:', err);
+        }
+    }
+
+    private async handleMessageRead(
+        message: Extract<SocketType, { type: MessageType.MESSAGE_READ }>,
+        socket: Socket
+    ) {
+        try {
+            const { roomId, payload } = message;
+            const { messageIds, readBy } = payload;
+
+            if (!roomId || !messageIds || messageIds.length === 0) return;
+
+            // Update messages to READ in DB (only if not already READ)
+            await prisma.message.updateMany({
+                where: {
+                    id: { in: messageIds },
+                    status: { not: 'READ' },
+                    authorId: { not: readBy },
+                },
+                data: { status: 'READ' }
+            });
+
+            // Broadcast to the room so sender sees blue ticks
+            this.broadcastToRoom({
+                type: MessageType.MESSAGE_READ,
+                roomId,
+                payload: { messageIds, readBy }
+            });
+
+            console.log(`${readBy} read ${messageIds.length} messages in room ${roomId}`);
+        } catch (err) {
+            console.log('handleMessageRead error:', err);
         }
     }
 

@@ -12,8 +12,9 @@ import { EllipsisVerticalIcon } from '@heroicons/react/24/solid';
 import DeleteRoom from '../room/DeleteRoom';
 import GroupDetailsModal from '../room/GroupDetailsModal';
 import { useDashboardStore } from '@/src/store/useDashboardStore';
-import { CheckCheck } from 'lucide-react';
+import { Check, CheckCheck } from 'lucide-react';
 import { Room } from '@/src/hooks/useRooms';
+import { Message } from '@/src/hooks/useMessages';
 
 interface ChatWindowProps {
     room: Room;
@@ -98,7 +99,11 @@ export default function ChatWindow({ room, onRoomDeleted }: ChatWindowProps) {
 
     const handleMessage = useCallback((data: any) => {
         if (data.type === MessageType.CHAT) {
-            setMessages((prev) => [...prev, data.payload]);
+            setMessages((prev) => [...prev, {
+                ...data.payload,
+                id: data.payload.id || `msg-${Date.now()}-${Math.random()}`,
+                status: data.payload.status || 'SENT',
+            }]);
             updateRoomLastMessage(room.id, data.payload.message);
         }
 
@@ -155,14 +160,49 @@ export default function ChatWindow({ room, onRoomDeleted }: ChatWindowProps) {
             }]);
             removeActiveUser(data.payload.userId);
         }
+
+        // Handle delivery status updates
+        if (data.type === MessageType.MESSAGE_DELIVERED) {
+            const deliveredIds = new Set(data.payload?.messageIds || []);
+            setMessages((prev) =>
+                prev.map((msg) =>
+                    deliveredIds.has(msg.id) && msg.status !== 'READ'
+                        ? { ...msg, status: 'DELIVERED' as const }
+                        : msg
+                )
+            );
+        }
+
+        // Handle read status updates
+        if (data.type === MessageType.MESSAGE_READ) {
+            const readIds = new Set(data.payload?.messageIds || []);
+            setMessages((prev) =>
+                prev.map((msg) =>
+                    readIds.has(msg.id)
+                        ? { ...msg, status: 'READ' as const }
+                        : msg
+                )
+            );
+        }
     }, [updateRoomLastMessage, addActiveUser, removeActiveUser, userId, room.id, setMessages]);
 
-    const { sendMessage, sendTyping } = useSocket({
+    const { sendMessage, sendTyping, sendReadReceipt } = useSocket({
         roomId: room.id,
         userId,
         username,
         onMessage: handleMessage,
     });
+
+    // Send read receipts for unread messages from other users
+    useEffect(() => {
+        const unreadIds = messages
+            .filter((msg) => msg.senderId !== userId && msg.type !== 'system' && msg.status && msg.status !== 'READ' && msg.id)
+            .map((msg) => msg.id);
+
+        if (unreadIds.length > 0) {
+            sendReadReceipt(unreadIds);
+        }
+    }, [messages, userId, sendReadReceipt]);
 
     function copyCode() {
         navigator.clipboard.writeText(room.code);
@@ -393,10 +433,12 @@ export default function ChatWindow({ room, onRoomDeleted }: ChatWindowProps) {
                                         {new Date(msg.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                     {isMe && (
-                                        activeUsers.some(u => u.id !== userId) ? (
+                                        msg.status === 'READ' ? (
                                             <CheckCheck className="w-3.5 h-3.5 text-sky-400 inline" />
-                                        ) : (
+                                        ) : msg.status === 'DELIVERED' ? (
                                             <CheckCheck className="w-3.5 h-3.5 text-gray-400 inline" />
+                                        ) : (
+                                            <Check className="w-3.5 h-3.5 text-gray-400 inline" />
                                         )
                                     )}
                                 </div>

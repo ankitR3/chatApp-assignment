@@ -61,11 +61,12 @@ model RoomMember {
 }
 
 model Message {
-  id        String      @id @default(cuid())
+  id        String        @id @default(cuid())
   content   String
-  type      MessageType @default(USER)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  type      MessageType   @default(USER)
+  status    MessageStatus @default(SENT)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
   authorId  String
   author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
@@ -86,4 +87,10 @@ enum RoomRole {
 enum MessageType {
   USER
   SYSTEM
+}
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
 }

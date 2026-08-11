@@ -9,7 +9,9 @@ export enum MessageType {
     TYPING = 'TYPING',
     STOP_TYPING = 'STOP_TYPING',
     USER_PRESENCE = 'USER_PRESENCE',
-    GET_ONLINE_USERS = 'GET_ONLINE_USERS'
+    GET_ONLINE_USERS = 'GET_ONLINE_USERS',
+    MESSAGE_DELIVERED = 'MESSAGE_DELIVERED',
+    MESSAGE_READ = 'MESSAGE_READ'
 }
 
 export interface UserPresence {
@@ -26,6 +28,7 @@ export interface Chat {
     timestamp: string;
     senderId: string;
     senderName: string;
+    status?: 'SENT' | 'DELIVERED' | 'READ';
 }
 
 export interface Subscribe {
@@ -113,4 +116,14 @@ export type SocketType =
         type: MessageType.GET_ONLINE_USERS;
         roomId?: string;
         payload?: OnlineUsersList;
+    }
+    | {
+        type: MessageType.MESSAGE_DELIVERED;
+        roomId: string;
+        payload: { messageIds: string[] };
+    }
+    | {
+        type: MessageType.MESSAGE_READ;
+        roomId: string;
+        payload: { messageIds: string[]; readBy: string };
     };

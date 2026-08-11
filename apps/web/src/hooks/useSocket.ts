@@ -85,6 +85,20 @@ export function useSocket({ roomId, userId, username, onMessage}: UseSocketProps
         socket.emit('message', payload);
     }, [roomId, userId, username]);
 
+    const sendReadReceipt = useCallback((messageIds: string[]) => {
+        const socket = socketRef.current;
+        if (!socket || !socket.connected || messageIds.length === 0) return;
+
+        socket.emit('message', {
+            type: MessageType.MESSAGE_READ,
+            roomId,
+            payload: {
+                messageIds,
+                readBy: userId,
+            }
+        });
+    }, [roomId, userId]);
+
     useEffect(() => {
         const socket = SocketManager.connect();
         socketRef.current = socket;
@@ -131,5 +145,5 @@ export function useSocket({ roomId, userId, username, onMessage}: UseSocketProps
         };
     }, [roomId, userId, username]);
 
-    return { sendMessage, sendTyping };
+    return { sendMessage, sendTyping, sendReadReceipt };
 }
