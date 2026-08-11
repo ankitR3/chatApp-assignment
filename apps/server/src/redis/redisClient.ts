@@ -1,5 +1,10 @@
 import Redis from 'ioredis';
 
-export const publisher = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+const redisUrl = process.env.REDIS_URL;
 
-export const subscriber = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+if (!redisUrl) {
+    throw new Error('REDIS_URL environment variable is required');
+}
+
+export const publisher = new Redis(redisUrl);
+export const subscriber = new Redis(redisUrl);
