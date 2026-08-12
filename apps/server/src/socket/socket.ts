@@ -240,12 +240,13 @@ class WebSocketClass {
 
             try {
                 await invalidateCache(roomId);
-                publisher.publish('broadcast_room', JSON.stringify(sendMessage)).catch(() => {});
+                publisher.publish('broadcast_room', JSON.stringify(sendMessage)).catch(() => {
+                    this.broadcastToRoom(sendMessage);
+                });
             } catch (redisErr) {
                 console.log('redis cache/pub error:', redisErr);
+                this.broadcastToRoom(sendMessage);
             }
-
-            this.broadcastToRoom(sendMessage);
 
             console.log(`Message sent to room ${roomId} with status ${initialStatus}`);
         } catch (err) {

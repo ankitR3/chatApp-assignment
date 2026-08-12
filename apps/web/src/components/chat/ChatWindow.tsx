@@ -99,11 +99,17 @@ export default function ChatWindow({ room, onRoomDeleted }: ChatWindowProps) {
 
     const handleMessage = useCallback((data: any) => {
         if (data.type === MessageType.CHAT) {
-            setMessages((prev) => [...prev, {
-                ...data.payload,
-                id: data.payload.id || `msg-${Date.now()}-${Math.random()}`,
-                status: data.payload.status || 'SENT',
-            }]);
+            setMessages((prev) => {
+                const msgId = data.payload?.id;
+                if (msgId && prev.some((m) => m.id === msgId)) {
+                    return prev;
+                }
+                return [...prev, {
+                    ...data.payload,
+                    id: msgId || `msg-${Date.now()}-${Math.random()}`,
+                    status: data.payload.status || 'SENT',
+                }];
+            });
             updateRoomLastMessage(room.id, data.payload.message);
         }
 

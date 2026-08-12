@@ -49,10 +49,13 @@ export function useSocket({ roomId, userId, username, onMessage }: UseSocketProp
         const socket = socketRef.current;
         if (!socket || !socket.connected) return;
 
+        const messageId = `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
         const payload = {
             type: MessageType.CHAT,
             roomId,
             payload: {
+                id: messageId,
                 message,
                 senderId: userId,
                 senderName: username,
