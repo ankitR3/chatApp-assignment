@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '@repo/db';
-import { nanoid } from 'nanoid';
+import { generateRoomCode } from '../../utils/generateCode';
 
 export default async function createRoomController(req: Request, res: Response) {
     const { userId, name, description, isPrivate } = req.body;
@@ -18,7 +18,7 @@ export default async function createRoomController(req: Request, res: Response) 
     }
 
     try {
-        const code = nanoid(6).toUpperCase();
+        const code = generateRoomCode(6);
         const room = await prisma.room.create({
             data: {
                 name,

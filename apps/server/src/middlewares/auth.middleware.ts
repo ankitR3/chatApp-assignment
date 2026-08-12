@@ -38,7 +38,7 @@ export default async function authMiddleware(req: Request, res: Response, next: 
         next();
     } catch (err) {
         console.log('auth error: ', err);
-        return res.status(500).json({
+        return res.status(401).json({
             message: 'unauthorized'
         });
     }

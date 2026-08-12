@@ -18,10 +18,14 @@ if(!PORT) {
     console.error('PORT not found');
 }
 
-const clientUrl = process.env.CLIENT_URL;
-
 app.use(cors({
-    origin: clientUrl ? [clientUrl, 'http://localhost:3000', 'http://localhost:5173'] : '*'
+    origin: [
+        'http://localhost:3000',
+        'http://localhost:5173',
+        'https://chat-app-assignment-web.vercel.app',
+        ...(process.env.CLIENT_URL ? [process.env.CLIENT_URL] : [])
+    ],
+    credentials: true,
 }));
 
 app.use('/api/v1/room', roomRouter);

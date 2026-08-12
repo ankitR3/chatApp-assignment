@@ -11,6 +11,8 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import axios from 'axios';
 
+import { useDashboardStore } from '@/src/store/useDashboardStore';
+
 interface CreateRoomProps {
     onRoomCreated: () => void;
 }
@@ -18,10 +20,12 @@ interface CreateRoomProps {
 export default function CreateRoom({ onRoomCreated }: CreateRoomProps) {
     const [roomName, setRoomName] = useState('');
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [open, setOpen] = useState(false);
-    const { data:session } = useSession();
+    const { data: session } = useSession();
     const [code, setCode] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
+    const { setSelectedRoom } = useDashboardStore();
 
     const handleCopy = async () => {
         if (!code) return;
@@ -38,6 +42,7 @@ export default function CreateRoom({ onRoomCreated }: CreateRoomProps) {
         if (!roomName.trim()) return;
         if (!session) return;
         setLoading(true);
+        setError(null);
         try {
             const res = await axios.post(CREATE_ROOM_URL, {
                 name: roomName,
@@ -48,11 +53,15 @@ export default function CreateRoom({ onRoomCreated }: CreateRoomProps) {
                     Authorization: `Bearer ${(session as any).user?.token}`,
                 }
             });
-            setCode(res.data.room.code);
-            setRoomName('');
-            onRoomCreated();
-        } catch (err) {
+            if (res.data?.room) {
+                setCode(res.data.room.code);
+                setRoomName('');
+                onRoomCreated();
+                setSelectedRoom(res.data.room);
+            }
+        } catch (err: any) {
             console.log('create room error: ', err);
+            setError(err.response?.data?.message || 'Failed to create room. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -65,6 +74,7 @@ export default function CreateRoom({ onRoomCreated }: CreateRoomProps) {
                 setCode(null);
                 setRoomName('');
                 setCopied(false);
+                setError(null);
             }
         }}>
             <DialogTrigger asChild>
@@ -80,6 +90,12 @@ export default function CreateRoom({ onRoomCreated }: CreateRoomProps) {
                 <DialogHeader>
                     <DialogTitle className='text-gray-900'>Create a room</DialogTitle>
                 </DialogHeader>
+
+                {error && (
+                    <div className='p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-xs font-medium'>
+                        {error}
+                    </div>
+                )}
 
                 {code ? (
                     <div className='flex flex-col items-center gap-3 py-4'>
