@@ -10,15 +10,10 @@ export class SocketManager {
 
     static connect(): Socket {
         if (!this.instance || !this.instance.connected) {
-            if (!this.instance) {
-                console.log('creating new socket connection');
-                this.instance = io(SOCKET_URL, {
-                    autoConnect: true,
-                    transports: ['websocket', 'polling'],
-                });
-            } else {
-                this.instance.connect();
-            }
+            this.instance = io(SOCKET_URL, {
+                autoConnect: true,
+                transports: ['websocket', 'polling'],
+            });
         }
         return this.instance;
     }
@@ -42,7 +37,7 @@ interface UseSocketProps {
     onMessage: (message: any) => void;
 }
 
-export function useSocket({ roomId, userId, username, onMessage}: UseSocketProps) {
+export function useSocket({ roomId, userId, username, onMessage }: UseSocketProps) {
     const socketRef = useRef<Socket | null>(null);
     const onMessageRef = useRef(onMessage);
 
@@ -100,7 +95,12 @@ export function useSocket({ roomId, userId, username, onMessage}: UseSocketProps
     }, [roomId, userId]);
 
     useEffect(() => {
-        const socket = SocketManager.connect();
+        if (!userId || !roomId) return;
+
+        const socket = io(SOCKET_URL, {
+            autoConnect: true,
+            transports: ['websocket', 'polling'],
+        });
         socketRef.current = socket;
 
         const subscribeToRoom = () => {
@@ -136,12 +136,13 @@ export function useSocket({ roomId, userId, username, onMessage}: UseSocketProps
             socket.off('message', handleIncomingMessage);
 
             if (socket.connected) {
-                const unsubscribePayload = {
+                socket.emit('message', {
                     type: MessageType.UNSUBSCRIBE,
                     roomId
-                };
-                socket.emit('message', unsubscribePayload);
+                });
             }
+            socket.disconnect();
+            socketRef.current = null;
         };
     }, [roomId, userId, username]);
 

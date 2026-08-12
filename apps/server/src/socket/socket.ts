@@ -240,10 +240,12 @@ class WebSocketClass {
 
             try {
                 await invalidateCache(roomId);
-                await publisher.publish('broadcast_room', JSON.stringify(sendMessage));
+                publisher.publish('broadcast_room', JSON.stringify(sendMessage)).catch(() => {});
             } catch (redisErr) {
-                this.broadcastToRoom(sendMessage);
+                console.log('redis cache/pub error:', redisErr);
             }
+
+            this.broadcastToRoom(sendMessage);
 
             console.log(`Message sent to room ${roomId} with status ${initialStatus}`);
         } catch (err) {
@@ -267,6 +269,7 @@ class WebSocketClass {
                         type: 'SYSTEM',
                     }
                 }).catch((e: any) => console.log('Prisma create error:', e));
+                await invalidateCache(roomId).catch(() => {});
             }
             socket.join(roomId);
             this.broadcastToRoom(message);
@@ -290,6 +293,7 @@ class WebSocketClass {
                         type: 'SYSTEM'
                     }
                 }).catch((e: any) => console.log('Prisma create error:', e));
+                await invalidateCache(roomId).catch(() => {});
             }
             this.broadcastToRoom(message);
             socket.leave(roomId);
